@@ -5,12 +5,12 @@ export function useDeviceInfo() {
 
     useEffect(() => {
         window.receiveDeviceInfo = (uuid, token, ostype) => {
-            console.log("기기 정보 수신:", uuid, token);
+            console.log("기기 정보 수신:", uuid, token, ostype);
             setDeviceInfo({ uuid, token, ostype });
         };
 
         if(window.webkit?.messageHandlers?.nativeBridge) {
-            window.webkit.messageHandlers.nativeBridge.postMessage("pushTokenReq");
+            window.webkit.messageHandlers.nativeBridge.postMessage("deviceInfoReq");
         }
 
         return () => {

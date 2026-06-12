@@ -6,6 +6,7 @@ import { useDeviceInfo } from "../hooks/useDeviceInfo";
 function DeviceRegister() {
     const { uuid, token, ostype } = useDeviceInfo();
     const [status, setStatus] = useState("");
+    const [ osname, setOsname] = useState("")
 
     useEffect(() => {
         if (!uuid) return;
@@ -22,6 +23,7 @@ function DeviceRegister() {
                 }, { merge: true });
 
                 setStatus("기기 등록 완료");
+                setOsname(ostype === "i" ? "iOS" : "Android");
             } catch (error) {
                 console.error("기기 등록 실패:", error);
                 setStatus("기기 등록 실패: " + error.message);
@@ -34,6 +36,7 @@ function DeviceRegister() {
     return (
         <div style= {{ fontSize: "12px", color: "#888" }} >
             { uuid && <p> 기기 ID: {uuid}</p> }
+            { ostype && <p> os : {osname}</p>}
             { status && <p> {status} </p>}
         </div>
     );

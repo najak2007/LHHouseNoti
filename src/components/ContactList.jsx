@@ -6,6 +6,9 @@ function ContactList() {
     const [contacts, setContacts] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    const SERVICE_KEY = process.env.APP_DATA_LHHOUSE_NOTI_KEY;
+
+
     useEffect(() => {
         const q = query(collection(db, "contacts"), orderBy("createdAt", "desc"));
 
@@ -28,6 +31,7 @@ function ContactList() {
 
     if (loading) return <p>불러오는 중...</p>;
     if (contacts.length === 0) return <p>등록된 연락처가 없습니다.</p>;
+    <p>서비스 키: {SERVICE_KEY} </p>
 
     return(
         <table border="1" cellPadding="8">

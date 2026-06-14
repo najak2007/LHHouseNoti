@@ -1,0 +1,182 @@
+/* ==========================================
+   1. 모바일 웹뷰 기본 베이스 및 리셋
+========================================== */
+body, .webview-container {
+    margin: 0;
+    padding: 0;
+    background-color: #f7f9fc; /* 앱 감성의 은은한 배경색 */
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-user-select: none; /* 텍스트 롱터치 선택 방지 (앱 스타일) */
+    user-select: none;
+    -webkit-touch-callout: none; /* iOS 롱터치 콜아웃 방지 */
+}
+
+.webview-container {
+    /* 아이폰 노치(Safe Area) 상단 대응 */
+    padding-top: calc(16px + env(safe-area-inset-top));
+    /* 하단 고정 버튼 공간 확보 + Safe Area 하단 대응 */
+    padding-bottom: calc(80px + env(safe-area-inset-bottom));
+    padding-left: 16px;
+    padding-right: 16px;
+}
+
+/* 타이틀 영역 */
+.webview-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1a1f2c;
+    margin-bottom: 20px;
+    padding-left: 4px;
+}
+
+/* ==========================================
+   2. 카드(Card) 레이아웃 디자인
+========================================== */
+.notice-card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04); /* 은은한 앱 스타일 그림자 */
+    border: 1px solid rgba(0, 0, 0, 0.02);
+    transition: transform 0.15s ease, background-color 0.15s ease;
+    -webkit-tap-highlight-color: transparent; /* 터치 하이라이트 제거 */
+    display: block;
+    text-decoration: none;
+    color: inherit;
+}
+
+/* 카드 터치 시 피드백 애니메이션 (앱 손맛) */
+.notice-card:active {
+    transform: scale(0.97);
+    background-color: #f1f3f7;
+}
+
+/* 배지(Badge) 스타일 - 상태 및 지역 */
+.badge-container {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.badge-status {
+    background-color: #e0f2fe;
+    color: #0369a1;
+}
+
+.badge-region {
+    background-color: #f1f5f9;
+    color: #475569;
+}
+
+/* 공고명 제목 */
+.notice-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1e293b;
+    line-height: 1.4;
+    margin: 0 0 12px 0;
+    word-break: keep-all; /* 모바일 글자 예쁘게 줄바꿈 */
+}
+
+/* 날짜 영역 */
+.notice-dates {
+    display: flex;
+    justify-content: space-between;
+    border-top: 1px solid #f1f5f9;
+    padding-top: 10px;
+    font-size: 13px;
+    color: #64748b;
+}
+
+.date-item span {
+    font-weight: 600;
+    color: #334155;
+}
+
+.date-item .deadline {
+    color: #ef4444;
+}
+
+/* ==========================================
+   3. 하단 고정 플로팅 버튼 (Safe Area 대응)
+========================================== */
+.floating-bottom-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(10px); /* 아이폰 반투명 블러 효과 */
+    -webkit-backdrop-filter: blur(10px);
+    padding: 12px 20px calc(12px + env(safe-area-inset-bottom));
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
+    display: flex;
+    justify-content: center;
+    z-index: 100;
+}
+
+.refresh-button {
+    width: 100%;
+    max-width: 500px;
+    background: #4f46e5; /* 모던한 인디고 블루 */
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+    -webkit-tap-highlight-color: transparent;
+    cursor: pointer;
+}
+
+.refresh-button:active {
+    background: #4338ca;
+    transform: scale(0.98);
+}
+
+/* ==========================================
+   4. 상태별 메세지 및 로딩 스피너
+========================================== */
+.webview-center-message {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background-color: #f7f9fc;
+    color: #64748b;
+    font-size: 15px;
+    text-align: center;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.error-text {
+    color: #ef4444;
+    font-weight: 500;
+}
+
+.spinner {
+    border: 3px solid #e2e8f0;
+    border-top: 3px solid #4f46e5;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 12px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}

@@ -4,55 +4,118 @@
 body, .webview-container {
     margin: 0;
     padding: 0;
-    background-color: #f7f9fc; /* 앱 감성의 은은한 배경색 */
+    background-color: #f7f9fc;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    -webkit-user-select: none; /* 텍스트 롱터치 선택 방지 (앱 스타일) */
+    -webkit-user-select: none;
     user-select: none;
-    -webkit-touch-callout: none; /* iOS 롱터치 콜아웃 방지 */
+    -webkit-touch-callout: none;
 }
 
 .webview-container {
-    /* 아이폰 노치(Safe Area) 상단 대응 */
-    padding-top: calc(16px + env(safe-area-inset-top));
-    /* 하단 고정 버튼 공간 확보 + Safe Area 하단 대응 */
+    /* 상단 고정 필터 바 영역 공간 확보 (+ Safe Area 상단 대응) */
+    padding-top: calc(230px + env(safe-area-inset-top));
     padding-bottom: calc(80px + env(safe-area-inset-bottom));
     padding-left: 16px;
     padding-right: 16px;
 }
 
-/* 타이틀 영역 */
+/* ==========================================
+   2. 상단 고정 필터 영역 (Sticky Filter Bar)
+========================================== */
+.fixed-header-box {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: #ffffff;
+    /* 아이폰 노치 공간만큼 상단 패딩 부여 */
+    padding-top: calc(16px + env(safe-area-inset-top));
+    padding-left: 16px;
+    padding-right: 16px;
+    padding-bottom: 14px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    z-index: 90;
+    border-bottom: 1px solid #f1f5f9;
+}
+
 .webview-title {
-    font-size: 22px;
+    font-size: 20px;
     font-weight: 700;
     color: #1a1f2c;
-    margin-bottom: 20px;
-    padding-left: 4px;
+    margin: 0 0 14px 0;
+}
+
+/* 필터 폼 레이아웃 */
+.filter-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.filter-row {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+}
+
+/* 모바일 커스텀 Select & Input */
+.filter-select, .filter-date {
+    flex: 1;
+    height: 44px; /* 모바일 터치 최적화 높이 */
+    padding: 0 12px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #334155;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    outline: none;
+    box-sizing: border-box;
+    -webkit-appearance: none; /* 브라우저 기본 화살표 제거 (필요시 스타일링) */
+    appearance: none;
+}
+
+/* 날짜 입력창 사이의 "~" 표시 */
+.date-separator {
+    display: flex;
+    align-items: center;
+    color: #94a3b8;
+    font-size: 14px;
+}
+
+/* 가독성을 위해 포커스 시 보더 컬러 변경 */
+.filter-select:focus, .filter-date:focus {
+    border-color: #4f46e5;
+    background-color: #ffffff;
 }
 
 /* ==========================================
-   2. 카드(Card) 레이아웃 디자인
+   3. 카드(Card) 레이아웃 디자인
 ========================================== */
+.card-list {
+    display: flex;
+    flex-direction: column;
+}
+
 .notice-card {
     background: #ffffff;
     border-radius: 16px;
     padding: 20px;
     margin-bottom: 16px;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04); /* 은은한 앱 스타일 그림자 */
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
     border: 1px solid rgba(0, 0, 0, 0.02);
     transition: transform 0.15s ease, background-color 0.15s ease;
-    -webkit-tap-highlight-color: transparent; /* 터치 하이라이트 제거 */
+    -webkit-tap-highlight-color: transparent;
     display: block;
     text-decoration: none;
     color: inherit;
 }
 
-/* 카드 터치 시 피드백 애니메이션 (앱 손맛) */
 .notice-card:active {
     transform: scale(0.97);
     background-color: #f1f3f7;
 }
 
-/* 배지(Badge) 스타일 - 상태 및 지역 */
 .badge-container {
     display: flex;
     gap: 6px;
@@ -67,27 +130,18 @@ body, .webview-container {
     font-weight: 600;
 }
 
-.badge-status {
-    background-color: #e0f2fe;
-    color: #0369a1;
-}
+.badge-status { background-color: #e0f2fe; color: #0369a1; }
+.badge-region { background-color: #f1f5f9; color: #475569; }
 
-.badge-region {
-    background-color: #f1f5f9;
-    color: #475569;
-}
-
-/* 공고명 제목 */
 .notice-title {
     font-size: 16px;
     font-weight: 600;
     color: #1e293b;
     line-height: 1.4;
     margin: 0 0 12px 0;
-    word-break: keep-all; /* 모바일 글자 예쁘게 줄바꿈 */
+    word-break: keep-all;
 }
 
-/* 날짜 영역 */
 .notice-dates {
     display: flex;
     justify-content: space-between;
@@ -97,17 +151,11 @@ body, .webview-container {
     color: #64748b;
 }
 
-.date-item span {
-    font-weight: 600;
-    color: #334155;
-}
-
-.date-item .deadline {
-    color: #ef4444;
-}
+.date-item span { font-weight: 600; color: #334155; }
+.date-item .deadline { color: #ef4444; }
 
 /* ==========================================
-   3. 하단 고정 플로팅 버튼 (Safe Area 대응)
+   4. 하단 고정 플로팅 버튼
 ========================================== */
 .floating-bottom-bar {
     position: fixed;
@@ -115,7 +163,7 @@ body, .webview-container {
     left: 0;
     right: 0;
     background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(10px); /* 아이폰 반투명 블러 효과 */
+    backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     padding: 12px 20px calc(12px + env(safe-area-inset-bottom));
     box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
@@ -127,7 +175,7 @@ body, .webview-container {
 .refresh-button {
     width: 100%;
     max-width: 500px;
-    background: #4f46e5; /* 모던한 인디고 블루 */
+    background: #4f46e5;
     color: white;
     border: none;
     border-radius: 12px;
@@ -145,7 +193,7 @@ body, .webview-container {
 }
 
 /* ==========================================
-   4. 상태별 메세지 및 로딩 스피너
+   5. 상태별 메세지 및 로딩 스피너
 ========================================== */
 .webview-center-message {
     display: flex;
@@ -161,11 +209,7 @@ body, .webview-container {
     box-sizing: border-box;
 }
 
-.error-text {
-    color: #ef4444;
-    font-weight: 500;
-}
-
+.error-text { color: #ef4444; font-weight: 500; }
 .spinner {
     border: 3px solid #e2e8f0;
     border-top: 3px solid #4f46e5;
@@ -175,7 +219,6 @@ body, .webview-container {
     animation: spin 0.8s linear infinite;
     margin-bottom: 12px;
 }
-
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }

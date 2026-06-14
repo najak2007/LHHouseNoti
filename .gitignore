@@ -67,3 +67,8 @@ node_modules/
 
 # dataconnect generated files
 .dataconnect
+
+# 'dist' 또는 'build' 결과물 폴더 제외하기
+dist/
+build/
+

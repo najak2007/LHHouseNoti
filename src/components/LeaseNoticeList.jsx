@@ -21,7 +21,7 @@ function LeaseNoticeList() {
             try {
                 // API 스펙에 맞춰 전달할 파라미터 구성
                 const params = {
-                    CNP_CD: region || undefined,
+                    locationName: region || undefined,
                     PAN_SS: status || undefined,
                     PAN_ST_DT: startDate ? startDate.replace(/-/g, "") : undefined, // YYYYMMDD 변환 필요시
                     PAN_ED_DT: endDate ? endDate.replace(/-/g, "") : undefined,
@@ -60,7 +60,18 @@ function LeaseNoticeList() {
                             <option value="41">경기</option>
                             <option value="26">부산</option>
                             <option value="28">인천</option>
-                            {/* 필요한 LH 지역 코드(CNP_CD)에 맞춰 옵션을 추가하세요 */}
+                            <option value="29">광주</option>
+                            <option value="30">대전</option>
+                            <option value="31">울산</option>
+                            <option value="36110">세종</option>
+                            <option value="42">강원</option>
+                            <option value="43">충북</option>
+                            <option value="44">충남</option>
+                            <option value="52">전북</option>
+                            <option value="46">전남</option>
+                            <option value="47">경북</option>
+                            <option value="48">경남</option>
+                            <option value="50">제주</option>
                         </select>
 
                         <select 

@@ -68,13 +68,6 @@ node_modules/
 # dataconnect generated files
 .dataconnect
 
-<<<<<<< HEAD
 # 'dist' 또는'build' 결과물 폴더 제외하기
 dist/
 build/
-=======
-# 'dist' 또는 'build' 결과물 폴더 제외하기
-dist/
-build/
-
->>>>>>> 59fccb7d1ebff9fff7a050b0b3d81bdb0ae1154d

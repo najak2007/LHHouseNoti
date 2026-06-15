@@ -40,5 +40,7 @@ export function getLocationCode(location = "서울") {
             return "48";
         case "제주":
             return "50";
+        default:
+            return ""; // 기본값은 서울로 설정
     }
 }

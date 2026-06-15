@@ -3,15 +3,26 @@ import { fetchLeaseNotices } from "../services/lhApi";
 import "../css/LeaseNoticeList.css";
 
 function LeaseNoticeList() {
+    const formatDate = (date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+    };
+
+    const today = new Date();
+    const twoMonthsAgo = new Date();
+    twoMonthsAgo.setMonth(today.getMonth() - 2);
+
     const [notices, setNotices] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
     // 💡 사용자가 선택할 필터 상태값 정의
     const [region, setRegion] = useState("");      // 지역 (CNP_CD)
-    const [status, setStatus] = useState("");      // 공고상태 (PAN_SS)
-    const [startDate, setStartDate] = useState("");// 시작일 (PAN_ST_DT)
-    const [endDate, setEndDate] = useState("");    // 종료일 (PAN_ED_DT)
+    const [panss, setPanss] = useState("");      // 공고상태 (PAN_SS)
+    const [startDate, setStartDate] = useState(formatDate(twoMonthsAgo));// 시작일 (PAN_ST_DT)
+    const [endDate, setEndDate] = useState(formatDate(today));    // 종료일 (PAN_ED_DT)
 
     useEffect(() => {
         let isMounted = true;
@@ -22,7 +33,7 @@ function LeaseNoticeList() {
                 // API 스펙에 맞춰 전달할 파라미터 구성
                 const params = {
                     locationName: region || undefined,
-                    PAN_SS: status || undefined,
+                    PAN_SS: panss || undefined,
                     PAN_ST_DT: startDate ? startDate.replace(/-/g, "") : undefined, // YYYYMMDD 변환 필요시
                     PAN_ED_DT: endDate ? endDate.replace(/-/g, "") : undefined,
                 };
@@ -38,7 +49,7 @@ function LeaseNoticeList() {
 
         load();
         return () => { isMounted = false; };
-    }, [region, status, startDate, endDate]); // 💡 필터 조건이 바뀔 때마다 자동으로 API를 재호출합니다.
+    }, [region, panss, startDate, endDate]); // 💡 필터 조건이 바뀔 때마다 자동으로 API를 재호출합니다.
 
     return (
         <div className="webview-container">
@@ -56,33 +67,35 @@ function LeaseNoticeList() {
                             onChange={(e) => setRegion(e.target.value)}
                         >
                             <option value="">지역 전체</option>
-                            <option value="11">서울</option>
-                            <option value="41">경기</option>
-                            <option value="26">부산</option>
-                            <option value="28">인천</option>
-                            <option value="29">광주</option>
-                            <option value="30">대전</option>
-                            <option value="31">울산</option>
-                            <option value="36110">세종</option>
-                            <option value="42">강원</option>
-                            <option value="43">충북</option>
-                            <option value="44">충남</option>
-                            <option value="52">전북</option>
-                            <option value="46">전남</option>
-                            <option value="47">경북</option>
-                            <option value="48">경남</option>
-                            <option value="50">제주</option>
+                            <option value="서울">서울</option>
+                            <option value="경기">경기</option>
+                            <option value="부산">부산</option>
+                            <option value="인천">인천</option>
+                            <option value="광주">광주</option>
+                            <option value="대전">대전</option>
+                            <option value="울산">울산</option>
+                            <option value="세종">세종</option>
+                            <option value="강원">강원</option>
+                            <option value="충북">충북</option>
+                            <option value="충남">충남</option>
+                            <option value="전북">전북</option>
+                            <option value="전남">전남</option>
+                            <option value="경북">경북</option>
+                            <option value="경남">경남</option>
+                            <option value="제주">제주</option>
                         </select>
 
                         <select 
                             className="filter-select" 
-                            value={status} 
-                            onChange={(e) => setStatus(e.target.value)}
+                            value={panss} 
+                            onChange={(e) => setPanss(e.target.value)}
                         >
                             <option value="">공고상태 전체</option>
+                            <option value="공고중">공고중</option>    
                             <option value="접수중">접수중</option>
-                            <option value="공고중">공고중</option>
                             <option value="접수마감">접수마감</option>
+                            <option value="상담요청">상담요청</option>
+                            <option value="정정공고중">정정공고중</option>
                         </select>
                     </div>
 

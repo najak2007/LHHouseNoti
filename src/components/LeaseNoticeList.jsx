@@ -17,6 +17,7 @@ function LeaseNoticeList() {
     const [notices, setNotices] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [page, setPage] = useState(1);
 
     // 💡 사용자가 선택할 필터 상태값 정의
     const [region, setRegion] = useState("");      // 지역 (CNP_CD)
@@ -32,6 +33,7 @@ function LeaseNoticeList() {
             try {
                 // API 스펙에 맞춰 전달할 파라미터 구성
                 const params = {
+                    PAGE: page,
                     locationName: region || undefined,
                     PAN_SS: panss || undefined,
                     PAN_ST_DT: startDate ? startDate.replace(/-/g, "") : undefined, // YYYYMMDD 변환 필요시
@@ -39,9 +41,15 @@ function LeaseNoticeList() {
                 };
 
                 const json = await fetchLeaseNotices(params);
-                if (isMounted) setNotices(json);
+                if (isMounted) {
+                    setNotices(json);
+                    setError(null);
+                }
             } catch (err) {
-                if (isMounted) setError(err.message);
+                if (isMounted) {
+                    setError(err.message);
+                    setNotices([]);
+                }
             } finally {
                 if (isMounted) setLoading(false);
             }
@@ -49,7 +57,7 @@ function LeaseNoticeList() {
 
         load();
         return () => { isMounted = false; };
-    }, [region, panss, startDate, endDate]); // 💡 필터 조건이 바뀔 때마다 자동으로 API를 재호출합니다.
+    }, [region, panss, startDate, endDate, page]); // 💡 필터 / 페이지 조건이 바뀔 때마다 API를 재호출합니다.
 
     return (
         <div className="webview-container">
@@ -64,7 +72,10 @@ function LeaseNoticeList() {
                         <select 
                             className="filter-select" 
                             value={region} 
-                            onChange={(e) => setRegion(e.target.value)}
+                            onChange={(e) => {
+                                setRegion(e.target.value);
+                                setPage(1);
+                            }}
                         >
                             <option value="">지역 전체</option>
                             <option value="서울">서울</option>
@@ -88,7 +99,10 @@ function LeaseNoticeList() {
                         <select 
                             className="filter-select" 
                             value={panss} 
-                            onChange={(e) => setPanss(e.target.value)}
+                            onChange={(e) => {
+                                setPanss(e.target.value);
+                                setPage(1);
+                            }}
                         >
                             <option value="">공고상태 전체</option>
                             <option value="공고중">공고중</option>    
@@ -105,14 +119,20 @@ function LeaseNoticeList() {
                             type="date" 
                             className="filter-date"
                             value={startDate}
-                            onChange={(e) => setStartDate(e.target.value)}
+                            onChange={(e) => {
+                                setStartDate(e.target.value);
+                                setPage(1);
+                            }}
                         />
                         <span className="date-separator">~</span>
                         <input 
                             type="date" 
                             className="filter-date"
                             value={endDate}
-                            onChange={(e) => setEndDate(e.target.value)}
+                            onChange={(e) => {
+                                setEndDate(e.target.value);
+                                setPage(1);
+                            }}
                         />
                     </div>
                 </div>
@@ -162,10 +182,22 @@ function LeaseNoticeList() {
                 </div>
             )}
 
-            {/* 하단 플로팅 바 & 새로고침 버튼 */}
+            {/* 하단 고정 페이징 바 */}
             <div className="floating-bottom-bar">
-                <button className="refresh-button" onClick={() => window.location.reload()}>
-                    새로고침
+                <button 
+                    className="page-button" 
+                    onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+                    disabled={page === 1 || loading}
+                >
+                    이전
+                </button>
+                <span className="page-indicator">페이지 {page}</span>
+                <button 
+                    className="page-button" 
+                    onClick={() => setPage((prev) => prev + 1)}
+                    disabled={loading || notices.length < 30}
+                >
+                    다음
                 </button>
             </div>
         </div>

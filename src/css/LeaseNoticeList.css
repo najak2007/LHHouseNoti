@@ -192,6 +192,44 @@ body, .webview-container {
     transform: scale(0.98);
 }
 
+.page-button {
+    flex: 1;
+    min-width: 100px;
+    background: #4f46e5;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 14px 16px;
+    font-size: 16px;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+    -webkit-tap-highlight-color: transparent;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.page-button:disabled {
+    background: #c7d2fe;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.page-button:active:not(:disabled) {
+    background: #4338ca;
+    transform: scale(0.98);
+}
+
+.page-indicator {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 120px;
+    margin: 0 10px;
+    color: #1e293b;
+    font-size: 15px;
+    font-weight: 600;
+}
+
 /* ==========================================
    5. 상태별 메세지 및 로딩 스피너
 ========================================== */

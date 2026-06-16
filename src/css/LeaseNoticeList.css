@@ -1,263 +1,496 @@
-/* ==========================================
-   1. 모바일 웹뷰 기본 베이스 및 리셋
-========================================== */
-body, .webview-container {
-    margin: 0;
-    padding: 0;
-    background-color: #f7f9fc;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    -webkit-user-select: none;
-    user-select: none;
-    -webkit-touch-callout: none;
-}
-
+/* 전체 컨테이너 설정 */
 .webview-container {
-    /* 상단 고정 필터 바 영역 공간 확보 (+ Safe Area 상단 대응) */
-    padding-top: calc(230px + env(safe-area-inset-top));
-    padding-bottom: calc(80px + env(safe-area-inset-bottom));
-    padding-left: 16px;
-    padding-right: 16px;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background-color: #f8f9fa; /* 배경색상 (연한 회색) */
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+        /* ✨ iPhone Safari WebKit flex 버그 대응 */
+    -webkit-flex-direction: column;
 }
 
-/* ==========================================
-   2. 상단 고정 필터 영역 (Sticky Filter Bar)
-========================================== */
+/* 📱 상단 고정 헤더 영역 */
 .fixed-header-box {
-    position: fixed;
+    position: sticky; /* ✨ fixed에서 sticky로 변경 */
     top: 0;
     left: 0;
     right: 0;
-    background: #ffffff;
-    /* 아이폰 노치 공간만큼 상단 패딩 부여 */
-    padding-top: calc(16px + env(safe-area-inset-top));
-    padding-left: 16px;
-    padding-right: 16px;
-    padding-bottom: 14px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-    z-index: 90;
-    border-bottom: 1px solid #f1f5f9;
+    z-index: 100;
+    background-color: #2c3e50;
+    border-radius: 8px;
+    padding: 16px 16px 12px 16px;
+    
+    /* 💡 iPhone 노치 디자인 대응 (Safe Area 확보) */
+    padding-top: calc(16px + env(safe-area-inset-top)); 
 }
 
+/* 타이틀 스타일 */
 .webview-title {
-    font-size: 20px;
-    font-weight: 700;
-    color: #1a1f2c;
-    margin: 0 0 14px 0;
+    color: #ffffff;
+    font-size: 22px;
+    font-weight: bold;
+    margin: 0 0 16px 0;
 }
 
-/* 필터 폼 레이아웃 */
+/* 필터 감싸는 컨테이너 */
 .filter-wrapper {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
 }
 
+/* 필터 각 행 (Select 묶음, Date 묶음) */
 .filter-row {
     display: flex;
     gap: 8px;
-    width: 100%;
-}
-
-/* 모바일 커스텀 Select & Input */
-.filter-select, .filter-date {
-    flex: 1;
-    height: 44px; /* 모바일 터치 최적화 높이 */
-    padding: 0 12px;
-    font-size: 14px;
-    font-weight: 500;
-    color: #334155;
-    background-color: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    outline: none;
-    box-sizing: border-box;
-    -webkit-appearance: none; /* 브라우저 기본 화살표 제거 (필요시 스타일링) */
-    appearance: none;
-}
-
-/* 날짜 입력창 사이의 "~" 표시 */
-.date-separator {
-    display: flex;
     align-items: center;
-    color: #94a3b8;
+}
+
+/* Select 드롭다운 스타일 */
+.filter-select {
+    flex: 1;
+    height: 36px;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    padding: 0 8px;
     font-size: 14px;
-}
-
-/* 가독성을 위해 포커스 시 보더 컬러 변경 */
-.filter-select:focus, .filter-date:focus {
-    border-color: #4f46e5;
     background-color: #ffffff;
+    outline: none;
+    box-sizing: border-box; /* ✨ 추가 */
+    min-width: 0;           /* ✨ 추가 */
 }
 
-/* ==========================================
-   3. 카드(Card) 레이아웃 디자인
-========================================== */
-.card-list {
+/* Date 인풋 스타일 */
+.filter-date {
+    flex: 1;
+    height: 36px;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    padding: 0 8px;
+    font-size: 14px;
+    background-color: #ffffff;
+    outline: none;
+    text-align: center;
+    box-sizing: border-box; /* ✨ 추가 */
+    min-width: 0;           /* ✨ 추가 */
+    -webkit-appearance: none; /* ✨ iOS Safari에서 date input 기본 높이/스타일 깨짐 방지 */
+    appearance: none;        /* ✨ 추가 */
+    line-height: 36px;       /* ✨ 텍스트 수직 중앙 정렬 보장 */
+}
+
+/* 기간검색 섹션 전체 */
+.date-filter-section {
     display: flex;
     flex-direction: column;
+    gap: 6px;
 }
 
+/* "기간검색" 카테고리 라벨 */
+.date-filter-label {
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: bold;
+    opacity: 0.8;
+}
+
+/* 게시 시작일/종료일 묶음 행 */
+.date-filter-row {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end; /* 입력칸들끼리 하단 정렬 */
+}
+
+/* 게시 시작일/종료일 개별 필드 (라벨 + 인풋 세로 배치) */
+.date-field {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+/* 게시 시작일/종료일 텍스트 라벨 */
+.date-field-label {
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* 날짜 사이 물결 표시 (~) - 인풋과 높이 맞춤 */
+.date-separator {
+    color: #ffffff;
+    font-weight: bold;
+    height: 36px;          /* ✨ filter-date 높이와 맞춤 */
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+/* select 사이 간격을 date-separator와 동일하게 맞추기 위한 가상의 구분자 */
+.select-separator {
+    width: 1ch;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+
+/* 💡 메인 콘텐츠 영역 */
+.main-content-area {
+    flex: 1;
+
+    -webkit-flex: 1;              /* ✨ 추가 */
+    /* ✨ 헤더가 늘어난 만큼 padding-top을 줄여서 완벽하게 밀착시킵니다 */
+    padding: 15px 12px 76px 12px; 
+}
+
+/* 카드 리스트 격자 레이아웃 (2열 배열) */
+.card-list {
+    display: grid;
+    grid-template-columns: 1fr; /* ✨ repeat(2, 1fr) → 1fr */
+    gap: 10px;
+}
+
+/* 개별 공고 카드 스타일 */
 .notice-card {
-    background: #ffffff;
-    border-radius: 16px;
-    padding: 20px;
-    margin-bottom: 16px;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
-    border: 1px solid rgba(0, 0, 0, 0.02);
-    transition: transform 0.15s ease, background-color 0.15s ease;
-    -webkit-tap-highlight-color: transparent;
-    display: block;
+    display: flex;
+    flex-direction: column;
+    background-color: #ffffff;
+    border-radius: 12px;
+    padding: 12px;
     text-decoration: none;
-    color: inherit;
+    color: #333333;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
 }
 
-.notice-card:active {
-    transform: scale(0.97);
-    background-color: #f1f3f7;
-}
-
+/* 뱃지 컨테이너 */
 .badge-container {
     display: flex;
     gap: 6px;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
 }
 
+/* 공통 뱃지 스타일 */
 .badge {
-    display: inline-block;
-    padding: 4px 8px;
-    border-radius: 6px;
     font-size: 11px;
-    font-weight: 600;
+    font-weight: bold;
+    padding: 3px 8px;
+    border-radius: 12px;
 }
 
-.badge-status { background-color: #e0f2fe; color: #0369a1; }
-.badge-region { background-color: #f1f5f9; color: #475569; }
+/* 공고상태 뱃지 (초록색 계열) */
+.badge-status {
+    background-color: #e6f7ed;
+    color: #219653;
+}
 
+/* 지역 뱃지 (파란색 계열) */
+.badge-region {
+    background-color: #e8f2ff;
+    color: #2f80ed;
+}
+
+/* 공고 제목 스타일 */
 .notice-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: #1e293b;
+    font-size: 14px;
+    font-weight: bold;
     line-height: 1.4;
     margin: 0 0 12px 0;
-    word-break: keep-all;
+    word-break: break-all;
+    /* 두 줄 이상일 때 말줄임 처리 필요 시 활용 */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
+/* 날짜 영역 */
 .notice-dates {
+    margin-top: auto; /* 제목이 짧아도 날짜는 카드 하단에 고정 */
+    font-size: 11px;
+    color: #828282;
+    border-top: 1px dashed #f2f2f2;
+    padding-top: 8px;
     display: flex;
-    justify-content: space-between;
-    border-top: 1px solid #f1f5f9;
-    padding-top: 10px;
-    font-size: 13px;
-    color: #64748b;
+    flex-direction: column;
+    gap: 2px;
 }
 
-.date-item span { font-weight: 600; color: #334155; }
-.date-item .deadline { color: #ef4444; }
+.date-item span {
+    color: #333333;
+    font-weight: 500;
+}
 
-/* ==========================================
-   4. 하단 고정 플로팅 버튼
-========================================== */
+/* 마감일 강조 */
+.date-item .deadline {
+    color: #eb5757;
+}
+
+/* 📱 하단 고정 페이징 바 */
 .floating-bottom-bar {
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    padding: 12px 20px calc(12px + env(safe-area-inset-bottom));
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
+    height: 60px;
+    background-color: #ffffff;
+    border-top: 1px solid #e0e0e0;
     display: flex;
-    justify-content: center;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
     z-index: 100;
 }
 
-.refresh-button {
-    width: 100%;
-    max-width: 500px;
-    background: #4f46e5;
-    color: white;
-    border: none;
-    border-radius: 12px;
-    padding: 14px;
-    font-size: 16px;
-    font-weight: 600;
-    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
-    -webkit-tap-highlight-color: transparent;
-    cursor: pointer;
-}
-
-.refresh-button:active {
-    background: #4338ca;
-    transform: scale(0.98);
-}
-
+/* 페이지 버튼 */
 .page-button {
-    flex: 1;
-    min-width: 100px;
-    background: #4f46e5;
-    color: white;
+    width: 68px;
+    height: 36px;
+    background-color: #2f80ed;
+    color: #ffffff;
     border: none;
-    border-radius: 12px;
-    padding: 14px 16px;
-    font-size: 16px;
-    font-weight: 600;
-    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
-    -webkit-tap-highlight-color: transparent;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: bold;
     cursor: pointer;
-    transition: background-color 0.2s ease, transform 0.1s ease;
 }
 
 .page-button:disabled {
-    background: #c7d2fe;
+    background-color: #e0e0e0;
+    color: #a0a0a0;
     cursor: not-allowed;
-    box-shadow: none;
 }
 
-.page-button:active:not(:disabled) {
-    background: #4338ca;
-    transform: scale(0.98);
-}
-
+/* 페이지 표시 텍스트 */
 .page-indicator {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 120px;
-    margin: 0 10px;
-    color: #1e293b;
-    font-size: 15px;
-    font-weight: 600;
+    font-size: 14px;
+    font-weight: 500;
+    color: #333333;
 }
 
-/* ==========================================
-   5. 상태별 메세지 및 로딩 스피너
-========================================== */
+/* 중앙 메시지 (로딩, 에러, 내역 없음) */
 .webview-center-message {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 100vh;
-    background-color: #f7f9fc;
-    color: #64748b;
-    font-size: 15px;
+    padding: 40px 20px;
+    color: #7f8c8d;
+    font-size: 14px;
     text-align: center;
-    padding: 20px;
-    box-sizing: border-box;
 }
 
-.error-text { color: #ef4444; font-weight: 500; }
+/* 로딩 스피너 */
 .spinner {
-    border: 3px solid #e2e8f0;
-    border-top: 3px solid #4f46e5;
+    width: 28px;
+    height: 28px;
+    border: 3px solid #e0e0e0;
+    border-top-color: #2f80ed;
     border-radius: 50%;
-    width: 24px;
-    height: 24px;
-    animation: spin 0.8s linear infinite;
+    animation: spin 1s linear infinite;
     margin-bottom: 12px;
 }
+
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    to { transform: rotate(360deg); }
+}
+
+.error-text {
+    color: #e74c3c;
+    line-height: 1.5;
+}
+
+/* ✨ 풀스크린 모달 오버레이 */
+.notice-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ffffff;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ✨ 모달 전체 (풀스크린) */
+.notice-modal {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+}
+
+/* ✨ 모달 상단 바 (닫기 버튼만 우측 정렬) */
+.notice-modal-header {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: calc(12px + env(safe-area-inset-top)) 16px 12px 16px;
+    flex-shrink: 0;
+    background-color: #ffffff;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+/* ✨ 닫기 버튼 */
+.notice-modal-close {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background-color: #f1f3f5;
+    border-radius: 50%;
+    font-size: 16px;
+    color: #333333;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ✨ 모달 본문 영역 (스크롤 가능) */
+.notice-modal-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 16px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* ✨ 모달 제목 */
+.notice-modal-title {
+    font-size: 18px;
+    font-weight: bold;
+    line-height: 1.4;
+    margin: 0 0 12px 0;
+    word-break: break-all;
+}
+
+/* ✨ 모달 날짜 영역 */
+.notice-modal-dates {
+    font-size: 13px;
+    color: #828282;
+    border-top: 1px dashed #e0e0e0;
+    border-bottom: 1px dashed #e0e0e0;
+    padding: 12px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 16px;
+}
+
+/* ✨ 상세 페이지 iframe (남은 공간 모두 채움) */
+.notice-modal-iframe {
+    flex: 1;
+    width: 100%;
+    min-height: 60vh;
+    border: none;
+    border-radius: 8px;
+}
+
+/* ✨ notice-card가 button이 되면서 생기는 기본 스타일 초기화 */
+.notice-card {
+    text-align: left;
+    width: 100%;
+}
+
+/* ✨ 외부 사이트 본문 콘텐츠 - 기본 스타일 초기화 */
+.notice-detail-content {
+    margin-top: 16px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #333333;
+    word-break: break-word;
+    overflow-x: auto; /* 표가 깨질 경우 가로 스크롤로 대응 */
+}
+
+.notice-detail-content img {
+    max-width: 100%;
+    height: auto;
+}
+
+.notice-detail-content table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+
+.notice-detail-content table th,
+.notice-detail-content table td {
+    border: 1px solid #e0e0e0;
+    padding: 6px 8px;
+}
+
+.notice-detail-content a {
+    color: #2f80ed;
+}
+
+.notice-detail-content .disabled-link {
+    color: #828282;
+    text-decoration: underline;
+    cursor: default;
+}
+
+.notice-detail-content {
+    margin-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.detail-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.detail-section-title {
+    font-size: 14px;
+    font-weight: bold;
+    color: #2c3e50;
+    border-left: 3px solid #2f80ed;
+    padding-left: 8px;
+    margin: 0;
+}
+
+.detail-text {
+    font-size: 13px;
+    line-height: 1.7;
+    color: #4a4a4a;
+    white-space: pre-line;
+    margin: 0;
+}
+
+.detail-table-wrapper {
+    overflow-x: auto;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+.detail-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.detail-table th {
+    background-color: #f8f9fa;
+    color: #2c3e50;
+    font-weight: bold;
+    padding: 8px 10px;
+    border-bottom: 1px solid #e2e8f0;
+    text-align: center;
+}
+
+.detail-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid #f1f3f5;
+    text-align: center;
+    color: #333333;
+}
+
+.detail-table tr:last-child td {
+    border-bottom: none;
 }

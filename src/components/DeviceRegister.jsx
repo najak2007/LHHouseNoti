@@ -32,14 +32,6 @@ function DeviceRegister() {
 
         registerDevice();
     }, [uuid, token, ostype]);
-
-    return (
-        <div style= {{ fontSize: "12px", color: "#888" }} >
-            { uuid && <p> 기기 ID: {uuid}</p> }
-            { ostype && <p> os : {osname}</p>}
-            { status && <p> {status} </p>}
-        </div>
-    );
 }
 
 export default DeviceRegister;

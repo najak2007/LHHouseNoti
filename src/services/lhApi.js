@@ -10,8 +10,9 @@ export async function fetchLeaseNotices(params = {}) {
     const PAN_ED_DT = params.PAN_ED_DT ? params.PAN_ED_DT.replace(/[-.]/g, "") : getTodayString();
     const CNP_CD = params.locationName ? getLocationCode(params.locationName) : "";
     const PAN_SS = params.PAN_SS || "";
+    const UPP_AIS_TP_CD = params.UPP_AIS_TP_CD || "05"; // 추가: 공고유형 필터
 
-    const url = `https://us-central1-lhhousenoti.cloudfunctions.net/lhLeaseNotice?serviceKey=${SERVICE_KEY}&PAGE=${PAGE}&PG_SZ=${PG_SZ}&PAN_ST_DT=${PAN_ST_DT}&PAN_ED_DT=${PAN_ED_DT}&CNP_CD=${CNP_CD}&PAN_SS=${PAN_SS}`;
+    const url = `https://us-central1-lhhousenoti.cloudfunctions.net/lhLeaseNotice?serviceKey=${SERVICE_KEY}&PAGE=${PAGE}&PG_SZ=${PG_SZ}&PAN_ST_DT=${PAN_ST_DT}&PAN_ED_DT=${PAN_ED_DT}&CNP_CD=${CNP_CD}&PAN_SS=${PAN_SS}&UPP_AIS_TP_CD=${UPP_AIS_TP_CD}`;
 
     const response = await fetch(url);
 
@@ -28,4 +29,22 @@ export async function fetchLeaseNotices(params = {}) {
     }
 
     return resultBlock?.dsList ?? [];
+}
+
+export async function fetchNoticeDetail(detailUrl) {
+    const url = `https://us-central1-lhhousenoti.cloudfunctions.net/noticeDetail?url=${encodeURIComponent(detailUrl)}`;
+
+    const response = await fetch(url);
+
+    if (!response.ok) {
+        throw new Error(`상세 정보 호출 실패: ${response.status}`);
+    }
+
+    const json = await response.json();
+
+    if (json.error) {
+        throw new Error(json.error);
+    }
+
+    return json; // { noticeContent, tables }
 }

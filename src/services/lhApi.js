@@ -31,20 +31,21 @@ export async function fetchLeaseNotices(params = {}) {
     return resultBlock?.dsList ?? [];
 }
 
-export async function fetchNoticeDetail(detailUrl) {
-    const url = `https://us-central1-lhhousenoti.cloudfunctions.net/noticeDetail?url=${encodeURIComponent(detailUrl)}`;
+
+export async function fetchLeaseNoticeDetail(params = {}) {
+    const SPL_INF_TP_CD = params.SPL_INF_TP_CD || "01"; // 추가: 상세유형 필터
+    const CCR_CNNT_SYS_DS_CD = params.CCR_CNNT_SYS_DS_CD || "01"; // 추가: 시스템구분 필터
+    const PAN_ID = params.PAN_ID || "";
+    const UPP_AIS_TP_CD = params.UPP_AIS_TP_CD || "05"; // 추가: 공고유형 필터
+    const AIS_TP_CD = params.AIS_TP_CD || "01"; // 추가: 공고유형 필터
+
+    const url = `https://us-central1-lhhousenoti.cloudfunctions.net/getLeaseNoticeDtlInfo1?serviceKey=${SERVICE_KEY}&SPL_INF_TP_CD=${SPL_INF_TP_CD}&CCR_CNNT_SYS_DS_CD=${CCR_CNNT_SYS_DS_CD}&PAN_ID=${PAN_ID}&UPP_AIS_TP_CD=${UPP_AIS_TP_CD}&AIS_TP_CD=${AIS_TP_CD}`;
 
     const response = await fetch(url);
 
     if (!response.ok) {
-        throw new Error(`상세 정보 호출 실패: ${response.status}`);
+        throw new Error(`API 호출 실패: ${response.status}`);
     }
 
-    const json = await response.json();
-
-    if (json.error) {
-        throw new Error(json.error);
-    }
-
-    return json; // { noticeContent, tables }
+    return await response.json();
 }

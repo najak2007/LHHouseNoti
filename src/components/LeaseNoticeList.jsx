@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { fetchLeaseNotices, fetchNoticeDetail } from "../services/lhApi";
+import { fetchLeaseNotices, fetchLeaseNoticeDetail } from "../services/lhApi";
 import "../css/LeaseNoticeList.css";
 
 function LeaseNoticeList() {
@@ -21,15 +21,15 @@ function LeaseNoticeList() {
 
     const [region, setRegion] = useState("");
     const [panss, setPanss] = useState("");
-    const [uppAisTpCd, setUppAisTpCd] = useState("05"); // ✨ 추가: 공고유형 필터
+    const [uppAisTpCd, setUppAisTpCd] = useState("05"); // 공고유형 필터
     const [startDate, setStartDate] = useState(formatDate(twoMonthsAgo));
     const [endDate, setEndDate] = useState(formatDate(today));
 
-    // ✨ 선택된 공고 (모달 오픈 여부 겸용)
+    // 선택된 공고 (모달 오픈 여부 겸용)
     const [selectedNotice, setSelectedNotice] = useState(null);
 
-    // ✨ 상세 본문 HTML 및 로딩 상태
-    const [detailHtml, setDetailHtml] = useState(null);
+    // fetchLeaseNoticeDetail 결과 및 로딩 상태
+    const [detail, setDetail] = useState(null);
     const [detailLoading, setDetailLoading] = useState(false);
     const [detailError, setDetailError] = useState(null);
 
@@ -67,7 +67,7 @@ function LeaseNoticeList() {
         return () => { isMounted = false; };
     }, [region, panss, startDate, endDate, page, uppAisTpCd]);
 
-    // ✨ 모달 열림/배경 스크롤 차단
+    // 모달 열림 시 배경 스크롤 차단
     useEffect(() => {
         if (selectedNotice) {
             document.body.style.overflow = "hidden";
@@ -79,9 +79,7 @@ function LeaseNoticeList() {
         };
     }, [selectedNotice]);
 
-    // ✨ 선택된 공고의 상세 본문 fetch
-    const [detail, setDetail] = useState(null); // { noticeContent, tables }
-
+    // 선택된 공고의 상세 정보를 fetchLeaseNoticeDetail로 조회
     useEffect(() => {
         if (!selectedNotice) {
             setDetail(null);
@@ -94,9 +92,17 @@ function LeaseNoticeList() {
         setDetailError(null);
         setDetail(null);
 
-        fetchNoticeDetail(selectedNotice.DTL_URL)
-            .then((data) => {
-                if (isMounted) setDetail(data);
+        fetchLeaseNoticeDetail({
+            PAN_ID: selectedNotice.PAN_ID,
+            UPP_AIS_TP_CD: selectedNotice.UPP_AIS_TP_CD || uppAisTpCd,
+            AIS_TP_CD: selectedNotice.AIS_TP_CD,
+            SPL_INF_TP_CD: selectedNotice.SPL_INF_TP_CD,
+            CCR_CNNT_SYS_DS_CD: selectedNotice.CCR_CNNT_SYS_DS_CD
+        })
+            .then((json) => {
+                // 응답 형태: [{ dsSch: [...] }, { dsCtrtPlc, dsSplScdl01, dsSplScdl02, dsAhflInfo, dsEtcInfo, ... }]
+                const data = Array.isArray(json) ? json[1] : json;
+                if (isMounted) setDetail(data || null);
             })
             .catch((err) => {
                 if (isMounted) setDetailError(err.message);
@@ -107,6 +113,28 @@ function LeaseNoticeList() {
 
         return () => { isMounted = false; };
     }, [selectedNotice]);
+
+    // dsSplScdl01(입찰형) / dsSplScdl02(추첨형) 중 데이터가 있는 쪽을 선택
+    const getActiveSchedule = (d) => {
+        if (!d) return null;
+        if (d.dsSplScdl02 && d.dsSplScdl02.length > 0) {
+            return {
+                title: "추첨일정",
+                data: d.dsSplScdl02[0],
+                labels: (d.dsSplScdl02Nm && d.dsSplScdl02Nm[0]) || {}
+            };
+        }
+        if (d.dsSplScdl01 && d.dsSplScdl01.length > 0) {
+            return {
+                title: "입찰일정",
+                data: d.dsSplScdl01[0],
+                labels: (d.dsSplScdl01Nm && d.dsSplScdl01Nm[0]) || {}
+            };
+        }
+        return null;
+    };
+
+    const schedule = getActiveSchedule(detail);
 
     return (
         <div className="webview-container">
@@ -158,7 +186,7 @@ function LeaseNoticeList() {
                             <option value="정정공고중">정정공고중</option>
                         </select>
 
-                        <select 
+                        <select
                             className="filter-select"
                             value={uppAisTpCd}
                             onChange={(e) => {
@@ -269,7 +297,6 @@ function LeaseNoticeList() {
                 </button>
             </div>
 
-            {/* ✨ 풀스크린 상세 팝업 */}
             {selectedNotice && (
                 <div className="notice-modal-overlay">
                     <div className="notice-modal">
@@ -309,41 +336,80 @@ function LeaseNoticeList() {
                             ) : detailError ? (
                                 <div className="webview-center-message">
                                     <p className="error-text">⚠️ {detailError}</p>
-                                    <a href={selectedNotice.DTL_URL} target="_blank" rel="noopener noreferrer">
-                                        새 창에서 보기
-                                    </a>
                                 </div>
                             ) : detail ? (
                                 <div className="notice-detail-content">
-                                    {detail.noticeContent && (
+                                    {detail.dsEtcInfo && detail.dsEtcInfo[0] && detail.dsEtcInfo[0].PAN_DTL_CTS && (
                                         <section className="detail-section">
-                                            <h3 className="detail-section-title">공고내용</h3>
-                                            <p className="detail-text">{detail.noticeContent}</p>
+                                            <h3 className="detail-section-title">
+                                                {(detail.dsEtcInfoNm && detail.dsEtcInfoNm[0] && detail.dsEtcInfoNm[0].PAN_DTL_CTS) || "공고내용"}
+                                            </h3>
+                                            <p className="detail-text">{detail.dsEtcInfo[0].PAN_DTL_CTS}</p>
                                         </section>
                                     )}
 
-                                    {detail.tables.map((table, idx) => (
-                                        <section className="detail-section" key={idx}>
+                                    {detail.dsCtrtPlc && detail.dsCtrtPlc[0] && (
+                                        <section className="detail-section">
+                                            <h3 className="detail-section-title">계약장소</h3>
+                                            <p className="detail-text">
+                                                {detail.dsCtrtPlc[0].CTRT_PLC_ADR} {detail.dsCtrtPlc[0].CTRT_PLC_DTL_ADR}
+                                            </p>
+                                        </section>
+                                    )}
+
+                                    {schedule && (
+                                        <section className="detail-section">
+                                            <h3 className="detail-section-title">{schedule.title}</h3>
                                             <div className="detail-table-wrapper">
                                                 <table className="detail-table">
-                                                    {table.headers.length > 0 && (
-                                                        <thead>
-                                                            <tr>
-                                                                {table.headers.map((h, i) => <th key={i}>{h}</th>)}
-                                                            </tr>
-                                                        </thead>
-                                                    )}
                                                     <tbody>
-                                                        {table.rows.map((row, rIdx) => (
-                                                            <tr key={rIdx}>
-                                                                {row.map((cell, cIdx) => <td key={cIdx}>{cell}</td>)}
+                                                        {Object.keys(schedule.data).map((key) => (
+                                                            <tr key={key}>
+                                                                <th>{schedule.labels[key] || key}</th>
+                                                                <td>{schedule.data[key]}</td>
                                                             </tr>
                                                         ))}
                                                     </tbody>
                                                 </table>
                                             </div>
                                         </section>
-                                    ))}
+                                    )}
+
+                                    {detail.dsAhflInfo && detail.dsAhflInfo.length > 0 && (
+                                        <section className="detail-section">
+                                            <h3 className="detail-section-title">첨부파일</h3>
+                                            <div className="detail-table-wrapper">
+                                                <table className="detail-table">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>
+                                                                {(detail.dsAhflInfoNm && detail.dsAhflInfoNm[0] && detail.dsAhflInfoNm[0].SL_PAN_AHFL_DS_CD_NM) || "파일구분"}
+                                                            </th>
+                                                            <th>
+                                                                {(detail.dsAhflInfoNm && detail.dsAhflInfoNm[0] && detail.dsAhflInfoNm[0].CMN_AHFL_NM) || "파일명"}
+                                                            </th>
+                                                            <th>
+                                                                {(detail.dsAhflInfoNm && detail.dsAhflInfoNm[0] && detail.dsAhflInfoNm[0].AHFL_URL) || "다운로드"}
+                                                            </th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {detail.dsAhflInfo.map((file, idx) => (
+                                                            <tr key={idx}>
+                                                                <td>{file.SL_PAN_AHFL_DS_CD_NM}</td>
+                                                                <td>{file.CMN_AHFL_NM}</td>
+                                                                <td>
+                                                                    <a href={file.AHFL_URL} target="_blank" rel="noopener noreferrer">
+                                                                        다운로드
+                                                                    </a>
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </section>
+                                    )}
                                 </div>
                             ) : null}
                         </div>

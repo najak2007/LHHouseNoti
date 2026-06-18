@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchLeaseNotices, fetchLeaseNoticeDetail } from "../services/lhApi";
+import { openNativeWebView } from "../utils/nativeBridge";
 import "../css/LeaseNoticeList.css";
 
 function LeaseNoticeList() {
@@ -256,7 +257,12 @@ function LeaseNoticeList() {
                                 key={item.PAN_ID}
                                 type="button"
                                 className="notice-card"
-                                onClick={() => setSelectedNotice(item)}
+                                onClick={() => {
+                                    // setSelectedNotice(item)
+                                    //window.location.href = item.DTL_URL;
+                                    openNativeWebView(item.DTL_URL, { title: item.PAN_NM });
+                                }
+                                }
                             >
                                 <div className="badge-container">
                                     <span className="badge badge-status">{item.PAN_SS}</span>

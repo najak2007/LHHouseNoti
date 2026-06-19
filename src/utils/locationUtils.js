@@ -44,3 +44,22 @@ export function getLocationCode(location = "서울") {
             return ""; // 기본값은 서울로 설정
     }
 }
+
+export function uppAisTpCdToName(aisTpCode) {
+    switch(aisTpCode) {
+        case "05":
+            return "분양 주택";
+        case "06":
+            return "임대 주택";
+        case "01":
+            return "토지";
+        case "13":
+            return "주거복지";
+        case "22":
+            return "상가";
+        case "39":
+            return "신혼 희망타운";
+        default:
+            return "분양 주택"; // 기본값은 분양주택으로 설정
+    }
+} 

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { fetchLeaseNotices, fetchLeaseNoticeDetail } from "../services/lhApi";
 import { openNativeWebView } from "../utils/nativeBridge";
+import { uppAisTpCdToName } from "../utils/locationUtils";
 import "../css/LeaseNoticeList.css";
 
 function LeaseNoticeList() {
@@ -140,7 +141,7 @@ function LeaseNoticeList() {
     return (
         <div className="webview-container">
             <div className="fixed-header-box">
-                <h1 className="webview-title">임대주택 공고</h1>
+                <h1 className="webview-title">LH분양 공고</h1>
 
                 <div className="filter-wrapper">
                     <div className="filter-row">
@@ -152,7 +153,7 @@ function LeaseNoticeList() {
                                 setPage(1);
                             }}
                         >
-                            <option value="">지역 전체</option>
+                            <option value="">지역</option>
                             <option value="서울">서울</option>
                             <option value="경기">경기</option>
                             <option value="부산">부산</option>
@@ -179,7 +180,7 @@ function LeaseNoticeList() {
                                 setPage(1);
                             }}
                         >
-                            <option value="">공고상태 전체</option>
+                            <option value="">공고상태</option>
                             <option value="공고중">공고중</option>
                             <option value="접수중">접수중</option>
                             <option value="접수마감">접수마감</option>
@@ -258,9 +259,28 @@ function LeaseNoticeList() {
                                 type="button"
                                 className="notice-card"
                                 onClick={() => {
-                                    // setSelectedNotice(item)
-                                    //window.location.href = item.DTL_URL;
-                                    openNativeWebView(item.DTL_URL, { title: item.PAN_NM });
+                                    let detailUrl = item.DTL_URL;
+
+                                    // 💡 LH 웹페이지 특성상 모바일 컨텍스트(&mi=1027 등) 환경임을 주소에 명시해주면 
+                                    // 시스템이 모바일 레이아웃(id="mNav"가 포함된 구조)을 훨씬 안정적으로 내려줍니다.
+                                    if (detailUrl && !detailUrl.includes("mi=")) {
+                                        const separator = detailUrl.includes("?") ? "&" : "?";
+                                        detailUrl = `${detailUrl}${separator}mi=1027`;
+                                    }
+
+                                    // 네이티브로 안전하게 Push 뷰 오픈 요청
+                                    openNativeWebView(detailUrl, { 
+                                        title: uppAisTpCdToName(item.UPP_AIS_TP_CD) || "공고 상세",
+                                        PAN_ID: item.PAN_ID,
+                                        CNP_CD_NM: item.CNP_CD_NM,
+                                        DTL_URL: detailUrl,
+                                        PAN_SS: item.PAN_SS,
+                                        PAN_NM: item.PAN_NM,
+                                        AIS_TP_CD_NM: item.AIS_TP_CD_NM,
+                                        UPP_AIS_TP_CD: item.UPP_AIS_TP_CD,
+                                        PAN_NT_ST_DT: item.PAN_NT_ST_DT,
+                                        CLSG_DT: item.CLSG_DT
+                                    });
                                 }
                                 }
                             >

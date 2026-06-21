@@ -22,23 +22,44 @@ export function getLocationCode(location = "서울") {
             return "31";
         case "세종":
             return "36110";
-        case "경기도":
+        case "경기":
             return "41";
-        case "강원도":
+        case "강원":
             return "42";
-        case "충청북도":
+        case "충북":
             return "43";
-        case "충청남도":
+        case "충남":
             return "44";
-        case "전북특별자치도":
+        case "전북":
             return "52";
-        case "전라남도":
+        case "전남":
             return "46";
-        case "경상북도":
+        case "경북":
             return "47";
-        case "경상남도":
+        case "경남":
             return "48";
-        case "제주특별자치도":
+        case "제주":
             return "50";
+        default:
+            return ""; // 기본값은 서울로 설정
     }
 }
+
+export function uppAisTpCdToName(aisTpCode) {
+    switch(aisTpCode) {
+        case "05":
+            return "분양 주택";
+        case "06":
+            return "임대 주택";
+        case "01":
+            return "토지";
+        case "13":
+            return "주거복지";
+        case "22":
+            return "상가";
+        case "39":
+            return "신혼 희망타운";
+        default:
+            return "분양 주택"; // 기본값은 분양주택으로 설정
+    }
+} 

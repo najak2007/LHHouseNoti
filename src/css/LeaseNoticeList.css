@@ -488,3 +488,8 @@
 .detail-table tr:last-child td {
     border-bottom: none;
 }
+
+input[type="date"] {
+  /* 글자 사이의 간격을 좁혀서 공백을 줄임 */
+  letter-spacing: -2px; 
+}

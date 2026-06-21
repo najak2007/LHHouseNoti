@@ -45,8 +45,8 @@ function LeaseNoticeList() {
                     PAGE: page,
                     locationName: region || undefined,
                     PAN_SS: panss || undefined,
-                    PAN_ST_DT: startDate ? startDate.replace(/-/g, "") : undefined,
-                    PAN_ED_DT: endDate ? endDate.replace(/-/g, "") : undefined,
+                    PAN_ST_DT: startDate ? startDate.replace(/-\.\" "/g, "") : undefined,
+                    PAN_ED_DT: endDate ? endDate.replace(/-\.\" "/g, "") : undefined,
                     UPP_AIS_TP_CD: uppAisTpCd || undefined
                 };
 

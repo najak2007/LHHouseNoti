@@ -4,7 +4,7 @@ import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { useDeviceInfo } from "../hooks/useDeviceInfo";
 
 function DeviceRegister() {
-    const { uuid, token, ostype } = useDeviceInfo();
+    const { uuid, token, ostype, modelname, detailmodelname } = useDeviceInfo();
     const [status, setStatus] = useState("");
     const [ osname, setOsname] = useState("")
 
@@ -18,7 +18,9 @@ function DeviceRegister() {
                 await setDoc(doc(db, "devices", uuid), {
                     uuid: uuid,
                     pushToken: token,
-                    platform: ostype,
+                    platform: ostype, 
+                    modelName: modelname,
+                    detailModelName: detailmodelname,
                     updatedAt: serverTimestamp()
                 }, { merge: true });
 
@@ -31,7 +33,7 @@ function DeviceRegister() {
         };
 
         registerDevice();
-    }, [uuid, token, ostype]);
+    }, [uuid, token, ostype, modelname, detailmodelname]);
 }
 
 export default DeviceRegister;

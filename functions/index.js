@@ -97,7 +97,8 @@ exports.lhLeaseNotice = functions.https.onRequest(async (req, res) => {
 // KST 오전 9시 (UTC 0시)
 exports.checkLHNoticesAM = onSchedule(
   { schedule: "0 0 * * *" },   // timeZone 제거 — UTC 기본값 사용
-  async () => { await runCheck(); }
+  async () => { await testPushNotification(); }
+//  async () => { await runCheck(); }
 );
 
 // KST 오후 3시 (UTC 6시)
@@ -222,6 +223,34 @@ async function sendPushNotifications(changes) {
   await Promise.all(sends);
   console.log(`📲 토픽 발송 시도 ${sends.length}건 완료`);
 }
+
+// ----- Test Topic Push Notification 
+async function testPushNotification() {
+  const messaging = getMessaging();
+  const sends = [];
+
+  sends.push(
+      messaging.send({
+        topic,
+        notification: {
+          title: "🏠 새 LH 분양 공고",
+          body:  notice.PAN_NM || "새로운 공고가 등록되었습니다.",
+        },
+        data: {
+          type:     "new_notice",
+          noticeId: String(notice.PAN_ID),
+          cnpCd:    String(notice.CNP_CD),
+          panSs:    notice.PAN_SS || "",
+        },
+      }).catch((err) => {
+        console.error(`❌ 토픽 발송 실패 (${topic}):`, err.message);
+      })
+    );
+  
+
+  await Promise.all(sends);
+  console.log(`📲 토픽 발송 시도 ${sends.length}건 완료`);
+} 
 
 // ── Firestore 스냅샷 업데이트 (batch 400건씩) ────────────────
 async function updateStoredNotices(freshNotices) {

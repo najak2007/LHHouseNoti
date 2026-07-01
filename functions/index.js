@@ -4,6 +4,7 @@ const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { initializeApp } = require("firebase-admin/app");
 const { getFirestore } = require("firebase-admin/firestore");
 const { getMessaging } = require("firebase-admin/messaging");
+const { onRequest } = require("firebase-functions/v2/https");
 
 initializeApp();
 const db = getFirestore();
@@ -97,8 +98,7 @@ exports.lhLeaseNotice = functions.https.onRequest(async (req, res) => {
 // KST 오전 9시 (UTC 0시)
 exports.checkLHNoticesAM = onSchedule(
   { schedule: "0 0 * * *" },   // timeZone 제거 — UTC 기본값 사용
-  async () => { await testPushNotification(); }
-//  async () => { await runCheck(); }
+  async () => { await runCheck(); }
 );
 
 // KST 오후 3시 (UTC 6시)
@@ -106,6 +106,32 @@ exports.checkLHNoticesPM = onSchedule(
   { schedule: "0 11 * * *" },
   async () => { await runCheck(); }
 );
+
+exports.testPush = onRequest(async (req, res) => {
+
+  const source = req.method === "POST" ? req.body : req.query;
+  const topic  = source.topic || "CNP_11"; // 기본값: 서울특별시
+  const notice = {
+    PAN_ID:  source.PAN_ID || "TEST123",
+    PAN_NM: source.PAN_NM || "테스트 공고",
+    CNP_CD: source.CNP_CD || "11",
+    PAN_SS: source.PAN_SS || "공고중",
+    AIS_TP_CD_NM: source.AIS_TP_CD_NM || "분양주택",
+  };
+
+  try {
+    const result = await testPushNotification(topic, notice);
+
+    res.json({
+      success: true,
+      topic,
+      notice,
+      messageId: result,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
 
 // 공통 실행 함수
 async function runCheck() {
@@ -175,7 +201,7 @@ async function sendPushNotifications(changes) {
       continue; // 지역코드 없는 경우 스킵
     }
 
-    const topic = `CNP_CD_${notice.CNP_CD}`;
+    const topic = `CNP_${notice.CNP_CD}`;
     sends.push(
       messaging.send({
         topic,
@@ -200,7 +226,7 @@ async function sendPushNotifications(changes) {
     if (!after.CNP_CD) {
       continue; // 지역코드 없는 경우 스킵
     }
-    const topic = `CNP_CD_${after.CNP_CD}`;
+    const topic = `CNP_${after.CNP_CD}`;
     sends.push(
       messaging.send({
         topic,
@@ -225,31 +251,31 @@ async function sendPushNotifications(changes) {
 }
 
 // ----- Test Topic Push Notification 
-async function testPushNotification() {
+async function testPushNotification(topic, notice) {
   const messaging = getMessaging();
-  const sends = [];
 
-  sends.push(
-      messaging.send({
-        topic,
-        notification: {
-          title: "🏠 새 LH 분양 공고",
-          body:  notice.PAN_NM || "새로운 공고가 등록되었습니다.",
-        },
-        data: {
-          type:     "new_notice",
-          noticeId: String(notice.PAN_ID),
-          cnpCd:    String(notice.CNP_CD),
-          panSs:    notice.PAN_SS || "",
-        },
-      }).catch((err) => {
-        console.error(`❌ 토픽 발송 실패 (${topic}):`, err.message);
-      })
-    );
-  
+  const message = {
+    topic,
+    notification: {
+      title: "🏠 새 LH 분양 공고",
+      body:  notice.PAN_NM || "새로운 공고가 등록되었습니다.",
+    },
+    data: {
+      type:     "new_notice",
+      noticeId: String(notice.PAN_ID),
+      cnpCd:    String(notice.CNP_CD),
+      panSs:    notice.PAN_SS || "",
+    },
+  };
 
-  await Promise.all(sends);
-  console.log(`📲 토픽 발송 시도 ${sends.length}건 완료`);
+  try {
+    const result = await messaging.send(message);
+    console.log(`📲 토픽 발송 성공 (${message.topic}):`, result);
+    return result;
+  } catch (error) {
+    console.error(`❌ 토픽 발송 실패 (${message.topic}):`, error.message);
+    throw error;
+  }
 } 
 
 // ── Firestore 스냅샷 업데이트 (batch 400건씩) ────────────────

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { fetchLeaseNotices, fetchLeaseNoticeDetail } from "../services/lhApi";
+import { fetchLeaseNoticesAndSync, fetchLeaseNoticeDetail } from "../services/lhApi";
 import { openNativeWebView } from "../utils/nativeBridge";
 import { uppAisTpCdToName } from "../utils/locationUtils";
 import "../css/LeaseNoticeList.css";
@@ -50,7 +50,8 @@ function LeaseNoticeList() {
                     UPP_AIS_TP_CD: uppAisTpCd || undefined
                 };
 
-                const json = await fetchLeaseNotices(params);
+                const json = await fetchLeaseNoticesAndSync(params);
+
                 if (isMounted) {
                     setNotices(json);
                     setError(null);

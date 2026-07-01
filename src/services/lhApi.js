@@ -1,7 +1,71 @@
 import { getTodayString, getMonthsAgoString } from "../utils/dateUtils";
 import { getLocationCode } from "../utils/locationUtils"; 
+import { getFirestore, collection, getDocs, doc, writeBatch } from "firebase/firestore";
 
 const SERVICE_KEY = 'f471c3a21df119bf22449a724bf67affb5f3387c2f29c661cda32b4b5031169a';
+const db = getFirestore();
+
+// ── 스냅샷 비교 후 신규/변경 저장 ────────────────────────────
+async function syncToSnapshot(freshNotices) {
+  // 1. 기존 스냅샷 가져오기
+  const snapshot = await getDocs(collection(db, "lh_notices_snapshot"));
+
+  const storedMap = {};
+  snapshot.forEach((doc) => { storedMap[doc.id] = doc.data(); });
+
+  // 2. 신규/변경 공고 필터링
+  const toUpdate = [];
+
+  for (const notice of freshNotices) {
+    const id     = String(notice.PAN_ID);
+    const stored = storedMap[id];
+
+    if (
+      !stored ||
+      stored.PAN_SS  !== notice.PAN_SS  ||
+      stored.CLSG_DT !== notice.CLSG_DT ||
+      stored.PAN_NM  !== notice.PAN_NM
+    ) {
+      toUpdate.push(notice);
+    }
+  }
+
+  if (toUpdate.length === 0) {
+    console.log("✅ 스냅샷 동기화 불필요 — 변동 없음");
+    return;
+  }
+
+  // 3. Firestore batch 저장 (500건 제한 대비 400건씩)
+  const CHUNK = 400;
+  for (let i = 0; i < toUpdate.length; i += CHUNK) {
+    const batch = writeBatch(db);
+    toUpdate.slice(i, i + CHUNK).forEach((notice) => {
+      const ref = doc(db, "lh_notices_snapshot", String(notice.PAN_ID));
+      batch.set(ref, {
+        PAN_SS:   notice.PAN_SS  || "",
+        CLSG_DT:  notice.CLSG_DT || "",
+        PAN_NM:   notice.PAN_NM  || "",
+        _savedAt: new Date().toISOString(),
+      });
+    });
+    await batch.commit();
+  }
+
+  console.log(`💾 스냅샷 ${toUpdate.length}건 동기화 완료`);
+}
+
+// ── fetchLeaseNotices 호출 후 syncToSnapshot 연결 ─────────────
+export async function fetchLeaseNoticesAndSync(params = {}) {
+  const notices = await fetchLeaseNotices(params);
+  
+  // 화면 렌더링은 즉시, 스냅샷 동기화는 백그라운드로
+  syncToSnapshot(notices).catch((err) =>
+    console.error("❌ 스냅샷 동기화 오류:", err)
+  );
+
+  return notices;  // 기존과 동일하게 반환
+}
+
 
 export async function fetchLeaseNotices(params = {}) {
     const PAGE = params.PAGE || 1;

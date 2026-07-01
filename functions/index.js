@@ -278,14 +278,18 @@ async function testPushNotification(topic, notice) {
   }
 } 
 
-// ── Firestore 스냅샷 업데이트 (batch 400건씩) ────────────────
 async function updateStoredNotices(freshNotices) {
   const CHUNK = 400;
   for (let i = 0; i < freshNotices.length; i += CHUNK) {
     const batch = db.batch();
     freshNotices.slice(i, i + CHUNK).forEach((notice) => {
       const ref = db.collection("lh_notices_snapshot").doc(String(notice.PAN_ID));
-      batch.set(ref, { ...notice, _savedAt: new Date().toISOString() });
+      batch.set(ref, {
+        PAN_SS:   notice.PAN_SS  || "",
+        CLSG_DT:  notice.CLSG_DT || "",
+        PAN_NM:   notice.PAN_NM  || "",
+        _savedAt: new Date().toISOString(),
+      });
     });
     await batch.commit();
   }

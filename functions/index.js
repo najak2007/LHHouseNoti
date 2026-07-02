@@ -11,6 +11,30 @@ const db = getFirestore();
 
 const SERVICE_KEY = "f471c3a21df119bf22449a724bf67affb5f3387c2f29c661cda32b4b5031169a";
 
+const CNP_CD_MAP = {
+  "서울특별시": "11",
+  "부산광역시": "26",
+  "대구광역시": "27",
+  "인천광역시": "28",
+  "광주광역시": "29",
+  "대전광역시": "30",
+  "울산광역시": "31",
+  "세종특별자치시": "36110",
+  "경기도": "41",
+  "강원도": "42",
+  "충청북도": "43",
+  "충청남도": "44",
+  "전라북도": "52",
+  "전라남도": "46",
+  "경상북도": "47",
+  "경상남도": "48",
+  "제주특별자치도": "50"
+};
+
+function resolveCnpCd(notice) {
+  return notice.CNP_CD || CNP_CD_MAP[notice.CNP_CD_NM] || null;
+}
+
 // ── 날짜 유틸 ────────────────────────────────────────────────
 function getTodayString() {
   const d = new Date();
@@ -140,6 +164,11 @@ async function runCheck() {
     const freshNotices = await fetchLeaseNotices({ PG_SZ: 100 });
     console.log(`📋 최신 공고 ${freshNotices.length}건 조회 완료`);
 
+    // ⬇️ 디버그용: 첫 번째 공고의 전체 필드 구조 확인
+    if (freshNotices.length > 0) {
+      console.log("🔎 샘플 공고 데이터:", JSON.stringify(freshNotices[0]));
+    }
+
     const changes = await compareWithStored(freshNotices);
     console.log(`🆕 신규: ${changes.added.length}건 | 변경: ${changes.updated.length}건`);
 
@@ -196,12 +225,13 @@ async function sendPushNotifications(changes) {
 
   // 신규 공고 알림 — 공고의 지역코드(CNP_CD) 토픽으로 발송
   for (const notice of changes.added) {
-
-    if (!notice.CNP_CD) {
+    const cnpCd = resolveCnpCd(notice);
+    if (!cnpCd) {
+      console.warn(`⚠️ 지역코드 미확인: ${notice.CNP_CD_NM || "알 수 없음"}`);
       continue; // 지역코드 없는 경우 스킵
     }
 
-    const topic = `CNP_${notice.CNP_CD}`;
+    const topic = `CNP_${cnpCd}`;
     sends.push(
       messaging.send({
         topic,
@@ -223,10 +253,12 @@ async function sendPushNotifications(changes) {
 
   // 변경 공고 알림
   for (const { after } of changes.updated) {
-    if (!after.CNP_CD) {
+    const cnpCd = resolveCnpCd(after);
+    if (!cnpCd) {
+      console.warn(`⚠️ 지역코드 미확인: ${after.CNP_CD_NM || "알 수 없음"}`);
       continue; // 지역코드 없는 경우 스킵
     }
-    const topic = `CNP_${after.CNP_CD}`;
+    const topic = `CNP_${cnpCd}`;
     sends.push(
       messaging.send({
         topic,
@@ -288,6 +320,7 @@ async function updateStoredNotices(freshNotices) {
         PAN_SS:   notice.PAN_SS  || "",
         CLSG_DT:  notice.CLSG_DT || "",
         PAN_NM:   notice.PAN_NM  || "",
+        CNP_CD_NM: notice.CNP_CD_NM || "",
         _savedAt: new Date().toISOString(),
       });
     });
@@ -312,29 +345,3 @@ exports.getLeaseNoticeDtlInfo1 = functions.https.onRequest(async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-
-exports.checkLHNotices = onSchedule( 
-  {
-    schedule: "0 9, 21 * * *", // 매일 9시, 21시에 실행
-    timeZone: "Asia/Seoul",
-  },
-  async (event) => {
-    console.log("🔍 LH 공고 변동 체크 시작");
-
-    try {
-      const freshNotices = await fetchLHNotices();
-
-      const changes = await compareWithStored(freshNotices);
-
-      if (changes.added.length > 0 || changes.updated.length > 0) {
-        await sendPushNotifications(changes);
-        await updateStoredNotices(freshNotices);
-        console.log(`✅ 변동 감지: 신규 ${changes.added.length}건, 변경 ${changes.updated.length}건`);
-      } else {
-        console.log("✅ 변동 없음");
-      }
-    } catch (error) {
-      console.error("❌ 변동 체크 중 오류 발생:", error);
-    }
-  }
-);

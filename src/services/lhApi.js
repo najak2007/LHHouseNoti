@@ -1,14 +1,15 @@
 import { getTodayString, getMonthsAgoString } from "../utils/dateUtils";
-import { getLocationCode } from "../utils/locationUtils"; 
+import { getFirestore, collection, getDocs, doc, writeBatch } from "firebase/firestore";
 
 const SERVICE_KEY = 'f471c3a21df119bf22449a724bf67affb5f3387c2f29c661cda32b4b5031169a';
+const db = getFirestore();
 
 export async function fetchLeaseNotices(params = {}) {
     const PAGE = params.PAGE || 1;
     const PG_SZ = params.PG_SZ || 30;
     const PAN_ST_DT = params.PAN_ST_DT ? params.PAN_ST_DT.replace(/[-.]/g, "") : getMonthsAgoString(2);
     const PAN_ED_DT = params.PAN_ED_DT ? params.PAN_ED_DT.replace(/[-.]/g, "") : getTodayString();
-    const CNP_CD = params.locationName ? getLocationCode(params.locationName) : "";
+    const CNP_CD = params.CNP_CD ? params.CNP_CD : "";
     const PAN_SS = params.PAN_SS || "";
     const UPP_AIS_TP_CD = params.UPP_AIS_TP_CD || "05"; // 추가: 공고유형 필터
 

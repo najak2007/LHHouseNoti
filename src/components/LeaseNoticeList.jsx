@@ -1,8 +1,29 @@
 import { useEffect, useState } from "react";
+import { getRemoteConfig, fetchAndActivate, getValue } from "firebase/remote-config";
+import app from "../firebase";
 import { fetchLeaseNotices, fetchLeaseNoticeDetail } from "../services/lhApi";
 import { openNativeWebView } from "../utils/nativeBridge";
 import { uppAisTpCdToName } from "../utils/locationUtils";
 import "../css/LeaseNoticeList.css";
+
+// ── Remote Config 기본값 (네트워크 지연/실패 대비) ────────────────────────────
+const REMOTE_CONFIG_DEFAULTS = {
+    location_names: JSON.stringify([
+        "서울특별시:11", "부산광역시:26", "대구광역시:27", "인천광역시:28",
+        "광주광역시:29", "대전광역시:30", "울산광역시:31", "세종특별자치시:36110",
+        "경기도:41", "강원도:42", "충청북도:43", "충청남도:44",
+        "전라북도:52", "전라남도:46", "경상북도:47", "경상남도:48",
+        "제주특별자치도:50"
+    ]),
+    pass_names: JSON.stringify([
+        "공고중:공고중", "접수중:접수중", "접수마감:접수마감",
+        "상담요청:상담요청", "정정공고중:정정공고중"
+    ]),
+    uppaistpcd_names: JSON.stringify([
+        "분양주택:05", "토지:01", "임대주택:06",
+        "주거복지:13", "상가:22", "신혼희망타운:39"
+    ])
+};
 
 function LeaseNoticeList() {
     const formatDate = (date) => {
@@ -21,9 +42,17 @@ function LeaseNoticeList() {
     const [error, setError] = useState(null);
     const [page, setPage] = useState(1);
 
-    const [region, setRegion] = useState("");
+    const [region, setRegion] = useState(""); // CNP_CD 코드값 (예: "11", "29")
+    const [locationOptions, setLocationOptions] = useState([]); // Remote Config: location_names
+
     const [panss, setPanss] = useState("");
-    const [uppAisTpCd, setUppAisTpCd] = useState("05"); // 공고유형 필터
+    const [panssOptions, setPanssOptions] = useState([]); // Remote Config: pass_names
+
+    const [uppAisTpCd, setUppAisTpCd] = useState("05"); // 기본값: 분양주택
+    const [uppAisTpCdOptions, setUppAisTpCdOptions] = useState([]); // Remote Config: uppaistpcd_names
+
+    const [remoteConfigLoading, setRemoteConfigLoading] = useState(true); // 세 옵션 모두의 로딩 상태
+
     const [startDate, setStartDate] = useState(formatDate(twoMonthsAgo));
     const [endDate, setEndDate] = useState(formatDate(today));
 
@@ -35,6 +64,59 @@ function LeaseNoticeList() {
     const [detailLoading, setDetailLoading] = useState(false);
     const [detailError, setDetailError] = useState(null);
 
+    // ── Remote Config에서 location_names, pass_names, uppaistpcd_names 로드 ────────────
+    useEffect(() => {
+        const remoteConfig = getRemoteConfig(app);
+        remoteConfig.settings.minimumFetchIntervalMillis = 3600000; // 1시간 (필요시 조정)
+        remoteConfig.defaultConfig = REMOTE_CONFIG_DEFAULTS; // 지연/실패 시 기본값 사용
+
+        const applyOptions = (source) => {
+            const parsedLocations = JSON.parse(source.location_names);
+            setLocationOptions(
+                parsedLocations.map((item) => {
+                    const [name, code] = item.split(":");
+                    return { name, code };
+                })
+            );
+
+            const parsedPanss = JSON.parse(source.pass_names);
+            setPanssOptions(
+                parsedPanss.map((item) => {
+                    const [name, code] = item.split(":");
+                    return { name, code };
+                })
+            );
+
+            const parsedUppAisTpCd = JSON.parse(source.uppaistpcd_names);
+            setUppAisTpCdOptions(
+                parsedUppAisTpCd.map((item) => {
+                    const [name, code] = item.split(":");
+                    return { name, code };
+                })
+            );
+        };
+
+        fetchAndActivate(remoteConfig)
+            .then(() => {
+                applyOptions({
+                    location_names: getValue(remoteConfig, "location_names").asString(),
+                    pass_names: getValue(remoteConfig, "pass_names").asString(),
+                    uppaistpcd_names: getValue(remoteConfig, "uppaistpcd_names").asString()
+                });
+            })
+            .catch((err) => {
+                console.error("Remote Config 로드 실패, 기본값(defaultConfig) 사용됨:", err);
+                try {
+                    applyOptions(REMOTE_CONFIG_DEFAULTS);
+                } catch (fallbackErr) {
+                    console.error("기본값 파싱도 실패:", fallbackErr);
+                }
+            })
+            .finally(() => {
+                setRemoteConfigLoading(false);
+            });
+    }, []);
+
     useEffect(() => {
         let isMounted = true;
 
@@ -43,7 +125,7 @@ function LeaseNoticeList() {
             try {
                 const params = {
                     PAGE: page,
-                    locationName: region || undefined,
+                    CNP_CD: region || undefined, 
                     PAN_SS: panss || undefined,
                     PAN_ST_DT: startDate ? startDate.replace(/-\.\" "/g, "") : undefined,
                     PAN_ED_DT: endDate ? endDate.replace(/-\.\" "/g, "") : undefined,
@@ -51,6 +133,7 @@ function LeaseNoticeList() {
                 };
 
                 const json = await fetchLeaseNotices(params);
+
                 if (isMounted) {
                     setNotices(json);
                     setError(null);
@@ -154,22 +237,17 @@ function LeaseNoticeList() {
                             }}
                         >
                             <option value="">지역</option>
-                            <option value="서울">서울</option>
-                            <option value="경기">경기</option>
-                            <option value="부산">부산</option>
-                            <option value="인천">인천</option>
-                            <option value="광주">광주</option>
-                            <option value="대전">대전</option>
-                            <option value="울산">울산</option>
-                            <option value="세종">세종</option>
-                            <option value="강원">강원</option>
-                            <option value="충북">충북</option>
-                            <option value="충남">충남</option>
-                            <option value="전북">전북</option>
-                            <option value="전남">전남</option>
-                            <option value="경북">경북</option>
-                            <option value="경남">경남</option>
-                            <option value="제주">제주</option>
+                            {remoteConfigLoading ? (
+                                <option value="" disabled>불러오는 중...</option>
+                            ) : locationOptions.length === 0 ? (
+                                <option value="" disabled>옵션 없음</option>
+                            ) : (
+                                locationOptions.map(({ name, code }) => (
+                                    <option key={code} value={code}>
+                                        {name}
+                                    </option>
+                                ))
+                            )}
                         </select>
 
                         <select
@@ -181,11 +259,17 @@ function LeaseNoticeList() {
                             }}
                         >
                             <option value="">공고상태</option>
-                            <option value="공고중">공고중</option>
-                            <option value="접수중">접수중</option>
-                            <option value="접수마감">접수마감</option>
-                            <option value="상담요청">상담요청</option>
-                            <option value="정정공고중">정정공고중</option>
+                            {remoteConfigLoading ? (
+                                <option value="" disabled>불러오는 중...</option>
+                            ) : panssOptions.length === 0 ? (
+                                <option value="" disabled>옵션 없음</option>
+                            ) : (
+                                panssOptions.map(({ name, code }) => (
+                                    <option key={code} value={code}>
+                                        {name}
+                                    </option>
+                                ))
+                            )}
                         </select>
 
                         <select
@@ -196,12 +280,17 @@ function LeaseNoticeList() {
                                 setPage(1);
                             }}
                         >
-                            <option value="05">분양주택</option>
-                            <option value="01">토지</option>
-                            <option value="06">임대주택</option>
-                            <option value="13">주거복지</option>
-                            <option value="22">상가</option>
-                            <option value="39">신혼희망타운</option>
+                            {remoteConfigLoading ? (
+                                <option value="" disabled>불러오는 중...</option>
+                            ) : uppAisTpCdOptions.length === 0 ? (
+                                <option value="" disabled>옵션 없음</option>
+                            ) : (
+                                uppAisTpCdOptions.map(({ name, code }) => (
+                                    <option key={code} value={code}>
+                                        {name}
+                                    </option>
+                                ))
+                            )}
                         </select>
                     </div>
 
@@ -261,7 +350,7 @@ function LeaseNoticeList() {
                                 onClick={() => {
                                     let detailUrl = item.DTL_URL;
 
-                                    // 💡 LH 웹페이지 특성상 모바일 컨텍스트(&mi=1027 등) 환경임을 주소에 명시해주면 
+                                    // 💡 LH 웹페이지 특성상 모바일 컨텍스트(&mi=1027 등) 환경임을 주소에 명시해주면
                                     // 시스템이 모바일 레이아웃(id="mNav"가 포함된 구조)을 훨씬 안정적으로 내려줍니다.
                                     if (detailUrl && !detailUrl.includes("mi=")) {
                                         const separator = detailUrl.includes("?") ? "&" : "?";
@@ -269,7 +358,7 @@ function LeaseNoticeList() {
                                     }
 
                                     // 네이티브로 안전하게 Push 뷰 오픈 요청
-                                    openNativeWebView(detailUrl, { 
+                                    openNativeWebView(detailUrl, {
                                         title: uppAisTpCdToName(item.UPP_AIS_TP_CD) || "공고 상세",
                                         PAN_ID: item.PAN_ID,
                                         CNP_CD_NM: item.CNP_CD_NM,
@@ -281,8 +370,7 @@ function LeaseNoticeList() {
                                         PAN_NT_ST_DT: item.PAN_NT_ST_DT,
                                         CLSG_DT: item.CLSG_DT
                                     });
-                                }
-                                }
+                                }}
                             >
                                 <div className="badge-container">
                                     <span className="badge badge-status">{item.PAN_SS}</span>

@@ -1,0 +1,26 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 공고 스냅샷: 서버(Cloud Functions, Admin SDK)만 쓰기, 클라이언트는 읽기만
+    match /lh_notices_snapshot/{docId} {
+      allow read: if true; // 혹은 인증된 사용자만: request.auth != null
+      allow write: if false; // Admin SDK는 rules 자체를 우회하므로 항상 true 처리됨
+    }
+
+    // 사용자 문서: 본인 것만 읽기/쓰기
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // FCM 토큰/구독 정보 등 사용자 하위 컬렉션이 있다면
+    match /users/{userId}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // 그 외는 기본 차단
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -243,8 +243,24 @@ async function sendPushNotifications(changes) {
           type:     "new_notice",
           noticeId: String(notice.PAN_ID),
           cnpCd:    String(notice.CNP_CD),
-          panSs:    notice.PAN_SS || "",
+          panSs:    String(notice.PAN_SS || ""),
+          panClsgDT:  String(notice.CLSG_DT || ""),
+          panNtStDt:  String(notice.PAN_ST_DT || ""),
+          dtlUrl:    String(notice.DTL_URL || ""),
+          panId:      String(notice.PAN_ID || ""),
+          cnpCdNm:   String(notice.CNP_CD_NM || ""),
+          panNm:     String(notice.PAN_NM || ""),
+          aisTpCdNm: String(notice.AIS_TP_CD_NM || ""),
+          uppAisTpCd: String(notice.UPP_AIS_TP_CD || ""),
         },
+        apns: {
+          payload: {
+            aps: {
+              "mutable-content": 1,
+              sound: "default",
+            },
+          },
+        }
       }).catch((err) => {
         console.error(`❌ 토픽 발송 실패 (${topic}):`, err.message);
       })
@@ -270,8 +286,24 @@ async function sendPushNotifications(changes) {
           type:     "updated_notice",
           noticeId: String(after.PAN_ID),
           cnpCd:    String(after.CNP_CD),
-          panSs:    after.PAN_SS || "",
+          panSs:    String(after.PAN_SS || ""),
+          panClsgDT:  String(after.CLSG_DT || ""),
+          panNtStDt:  String(after.PAN_ST_DT || ""),
+          dtlUrl:    String(after.DTL_URL || ""),
+          panId:      String(after.PAN_ID || ""),
+          cnpCdNm:   String(after.CNP_CD_NM || ""),
+          panNm:     String(after.PAN_NM || ""),
+          aisTpCdNm: String(after.AIS_TP_CD_NM || ""),
+          uppAisTpCd: String(after.UPP_AIS_TP_CD || ""),
         },
+        apns: {
+          payload: {
+            aps: {
+              "mutable-content": 1,
+              sound: "default",
+            },
+          },
+        }
       }).catch((err) => {
         console.error(`❌ 토픽 발송 실패 (${topic}):`, err.message);
       })
@@ -297,6 +329,14 @@ async function testPushNotification(topic, notice) {
       noticeId: String(notice.PAN_ID),
       cnpCd:    String(notice.CNP_CD),
       panSs:    notice.PAN_SS || "",
+    },
+    apns: {
+      payload: {
+        aps: {
+          "mutable-content": 1,
+          sound: "default",
+        },
+      },
     },
   };
 

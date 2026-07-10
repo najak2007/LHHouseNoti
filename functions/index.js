@@ -119,13 +119,13 @@ exports.lhLeaseNotice = functions.https.onRequest(async (req, res) => {
 // 2. 스케줄러 — 하루 2회 자동 변동 체크
 // ════════════════════════════════════════════════════════════
 // 오전 9시
-// KST 오전 9시 (UTC 0시)
+// KST 오전 8시 30분 (UTC 전날 23시 30분)
 exports.checkLHNoticesAM = onSchedule(
-  { schedule: "0 0 * * *" },   // timeZone 제거 — UTC 기본값 사용
+  { schedule: "30 23 * * *" },   // timeZone 제거 — UTC 기본값 사용
   async () => { await runCheck(); }
 );
 
-// KST 오후 3시 (UTC 6시)
+// KST 오후 8시 (UTC 6시)
 exports.checkLHNoticesPM = onSchedule(
   { schedule: "0 11 * * *" },
   async () => { await runCheck(); }
@@ -245,7 +245,7 @@ async function sendPushNotifications(changes) {
           cnpCd:    String(notice.CNP_CD),
           panSs:    String(notice.PAN_SS || ""),
           panClsgDT:  String(notice.CLSG_DT || ""),
-          panNtStDt:  String(notice.PAN_ST_DT || ""),
+          panNtStDt:  String(notice.PAN_NT_ST_DT || ""),
           dtlUrl:    String(notice.DTL_URL || ""),
           panId:      String(notice.PAN_ID || ""),
           cnpCdNm:   String(notice.CNP_CD_NM || ""),
@@ -288,7 +288,7 @@ async function sendPushNotifications(changes) {
           cnpCd:    String(after.CNP_CD),
           panSs:    String(after.PAN_SS || ""),
           panClsgDT:  String(after.CLSG_DT || ""),
-          panNtStDt:  String(after.PAN_ST_DT || ""),
+          panNtStDt:  String(after.PAN_NT_ST_DT || ""),
           dtlUrl:    String(after.DTL_URL || ""),
           panId:      String(after.PAN_ID || ""),
           cnpCdNm:   String(after.CNP_CD_NM || ""),

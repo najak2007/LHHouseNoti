@@ -69,10 +69,28 @@
     outline: none;
     text-align: center;
     box-sizing: border-box; 
-    min-width: 0;           
+    min-width: 0;              /* ✅ 추가: input 자체에도 min-width 강제 해제 */
+    width: 100%;                /* ✅ 추가: flex-basis 대신 부모폭 기준으로 강제 */     
     -webkit-appearance: none; 
     appearance: none;        
     line-height: 36px;       
+}
+
+/* ✅ Android 캘린더 아이콘이 여백을 과하게 먹는 문제 보정 */
+.filter-date::-webkit-calendar-picker-indicator {
+    margin-left: 2px;
+    padding: 0;
+}
+
+/* ✅ 화면이 아주 좁을 때는 두 필드를 세로로 쌓아서 애초에 좁아지는 상황 자체를 피함 */
+@media (max-width: 340px) {
+    .date-filter-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .date-separator {
+        display: none;
+    }
 }
 
 /* 기간검색 섹션 전체 */

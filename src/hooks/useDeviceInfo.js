@@ -9,7 +9,9 @@ export function useDeviceInfo() {
             setDeviceInfo({ uuid, token, ostype, modelname, detailmodelname });
         };
 
-        if(window.webkit?.messageHandlers?.nativeBridge) {
+        if(window.AndroidBridge) {
+            window.AndroidBridge.deviceInfoReq();
+        } else if(window.webkit?.messageHandlers?.nativeBridge) {
             window.webkit.messageHandlers.nativeBridge.postMessage("deviceInfoReq");
         }
 

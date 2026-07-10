@@ -11,6 +11,8 @@ function DeviceRegister() {
     useEffect(() => {
         if (!uuid) return;
 
+        console.log("uuid type:", typeof uuid, "value:", uuid);
+
         const registerDevice = async () => {
             try {
                 setStatus("기기 정보 저장 중...");

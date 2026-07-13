@@ -58,29 +58,41 @@
 }
 
 /* Date 인풋 스타일 (14px -> 16px) */
+/* Date 인풋 스타일 수정 */
 .filter-date {
     flex: 1;
     height: 36px;
     border-radius: 8px;
     border: 1px solid #e0e0e0;
-    padding: 0 8px;
-    font-size: 16px; /* 💡 2px 증가 */
+    /* 💡 갤럭시 대응: 패딩을 더 줄이고 폰트 크기를 조절합니다 */
+    padding: 0 4px;           
+    font-size: 14px;          /* 16px -> 14px로 축소 */
     background-color: #ffffff;
     outline: none;
     text-align: center;
     box-sizing: border-box; 
-    min-width: 0;              /* ✅ 추가: input 자체에도 min-width 강제 해제 */
-    width: 100%;                /* ✅ 추가: flex-basis 대신 부모폭 기준으로 강제 */     
+    min-width: 0;           
+    width: 100%;                     
     -webkit-appearance: none; 
     appearance: none;        
-    line-height: 36px;       
+    line-height: 36px;
+    /* 💡 갤럭시에서 날짜가 길어지는 현상 방지 */
+    letter-spacing: -1.2px;   
+}
+/* ✅ 갤럭시/안드로이드 날짜 아이콘 및 불필요 공간 제거 */
+.filter-date::-webkit-calendar-picker-indicator {
+    margin: 0;
+    padding: 0;
+    width: 12px; /* 아이콘 크기 최소화 */
 }
 
-/* ✅ Android 캘린더 아이콘이 여백을 과하게 먹는 문제 보정 */
-.filter-date::-webkit-calendar-picker-indicator {
-    margin-left: 2px;
-    padding: 0;
+/* 내부 스핀 버튼(화살표) 등 제거하여 공간 확보 */
+.filter-date::-webkit-inner-spin-button,
+.filter-date::-webkit-clear-button {
+    display: none;
+    -webkit-appearance: none;
 }
+
 
 /* ✅ 화면이 아주 좁을 때는 두 필드를 세로로 쌓아서 애초에 좁아지는 상황 자체를 피함 */
 @media (max-width: 340px) {
@@ -92,6 +104,22 @@
         display: none;
     }
 }
+
+/* ✅ 화면 폭 대응 브레이크포인트 상향 (갤럭시 기본 360px 대응) */
+@media (max-width: 365px) {
+    .date-filter-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+    .date-separator {
+        display: none; /* 세로로 바뀔 땐 물결무늬 제거 */
+    }
+    .date-field-label {
+        font-size: 12px;
+    }
+}
+
 
 /* 기간검색 섹션 전체 */
 .date-filter-section {
@@ -108,10 +136,10 @@
     opacity: 0.8;
 }
 
-/* 게시 시작일/종료일 묶음 행 */
+/* ✅ 게시 시작일/종료일 묶음 행 간격 축소 */
 .date-filter-row {
     display: flex;
-    gap: 8px;
+    gap: 4px;       /* 8px -> 4px로 축소 */
     align-items: flex-end; 
 }
 
@@ -131,7 +159,7 @@
     font-weight: 500;
 }
 
-/* 날짜 사이 물결 표시 (~) */
+/* 날짜 사이 물결 표시 간격 조정 */
 .date-separator {
     color: #ffffff;
     font-weight: bold;
@@ -139,8 +167,8 @@
     display: flex;
     align-items: center;
     flex-shrink: 0;
+    margin: 0 1px; /* 양옆 여백 최소화 */
 }
-
 /* 가상의 구분자 */
 .select-separator {
     width: 1ch;
